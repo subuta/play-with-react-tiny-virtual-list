@@ -13,9 +13,12 @@ npm i
 # Start development server
 npm run serve
 
+# Open app (served by `poi`)
+open http://localhost:4000
+
 # Build & Serve static assets
 npm run servep
 
-# Open app
-open http://localhost:4000
+# Open app (served by `serve`)
+open http://localhost:5000
 ```

@@ -6,7 +6,7 @@
   "scripts": {
     "serve": "poi",
     "servep": "npm run build && cd ./docs && serve",
-    "build": "poi build --out-dir docs"
+    "build": "poi build --out-dir docs --public-path /play-with-react-tiny-virtual-list/"
   },
   "repository": {
     "type": "git",
