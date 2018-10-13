@@ -1,0 +1,33 @@
+{
+  "name": "play-with-react-tiny-virtual-list",
+  "version": "1.0.0",
+  "description": "Playground repository of random height image list.",
+  "main": "index.js",
+  "scripts": {
+    "serve": "poi",
+    "servep": "npm run build && cd ./docs && serve",
+    "build": "poi build --out-dir docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/subuta/play-with-react-tiny-virtual-list.git"
+  },
+  "author": "subuta <shunta.3110@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/subuta/play-with-react-tiny-virtual-list/issues"
+  },
+  "homepage": "https://github.com/subuta/play-with-react-tiny-virtual-list#readme",
+  "dependencies": {
+    "lodash": "^4.17.11",
+    "react": "^16.5.2",
+    "react-dom": "^16.5.2",
+    "react-tiny-virtual-list": "^2.2.0",
+    "recompose": "^0.30.0"
+  },
+  "devDependencies": {
+    "poi": "^10.2.10",
+    "react-hot-loader": "^4.3.11",
+    "serve": "^10.0.2"
+  }
+}
