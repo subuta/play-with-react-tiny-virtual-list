@@ -4,6 +4,8 @@ Playground repository of random height image list.
 
 Demo: https://subuta.github.io/play-with-react-tiny-virtual-list/
 
+<img src="assets/preview.png" width="1058" height="auto">
+
 ### How to develop
 
 ```
