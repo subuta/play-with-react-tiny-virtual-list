@@ -82,7 +82,7 @@ const Images = ({ photos, renderItem, vh }) => {
         justifyContent: 'space-between'
       }}>
         <Link to="/pokemons">/pokemons</Link>
-        <span>SEE: <a href="https://picsum.photos/" target='_blank'>https://picsum.photos/</a> for more images.</span>
+        <span>SEE: <a href="https://picsum.photos/" target='_blank'>Lorem Picsum</a> for more images.</span>
       </footer>
     </>
   )

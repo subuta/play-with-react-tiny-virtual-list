@@ -15,25 +15,34 @@ import {
   renderComponent
 } from 'recompose'
 
-const getPokemonDetail = (id, lang = 'en') => {
+const getPokemonDetail = (id) => {
   return Promise.all([
     fetch(`https://pokeapi.co/api/v2/pokemon/${id}/`),
     fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}/`)
   ]).then(([info, spec]) => {
+    const randomLang = _.get(_.sample(spec.names), 'language.name')
+
+    const getLocaled = (collection) => {
+      const grouped = _.groupBy(collection, 'language.name')
+      const picked = _.pick(grouped, ['ja', 'en', randomLang])
+      return _.transform(picked, (result, values, key) => {
+        result[key] = _.first(values)
+      }, {})
+    }
+
     // Fetch attributes from response.
-    const enName = _.get(info, 'name', '')
+    const names = getLocaled(spec.names)
     const frontImage = _.get(info, 'sprites.front_default', null)
     const backImage = _.get(info, 'sprites.back_default', null)
-    const name = _.get(_.find(spec.names, (name) => name.language.name === lang), 'name', '')
-    const flavorText = _.get(_.find(spec.flavor_text_entries, (flavorText) => flavorText.language.name === lang), 'flavor_text', '')
+    const flavorTexts = getLocaled(spec.flavor_text_entries)
 
     return {
       id,
-      enName,
       frontImage,
       backImage,
-      name,
-      flavorText
+      names,
+      flavorTexts,
+      randomLang
     }
   })
 }
@@ -43,9 +52,9 @@ const enhance = compose(
   withState('detail', 'setDetail', null),
   lifecycle({
     componentDidMount () {
-      const { id, lang, setDetail } = this.props
+      const { pokemon, setDetail } = this.props
       // Keep promise reference for cancel.
-      this.promise = getPokemonDetail(id, lang).then(detail => setDetail(detail))
+      this.promise = getPokemonDetail(pokemon.id).then(detail => setDetail(detail))
     },
 
     componentWillUnmount () {
@@ -63,24 +72,38 @@ const enhance = compose(
 
 const Pokemon = (props) => {
   const {
-    detail = {}
+    detail = {},
+    pokemon,
   } = props
 
   const {
     id,
-    enName,
+    names = {},
+    flavorTexts = {},
     frontImage,
-    backImage,
-    name,
-    flavorText
+    backImage
   } = detail
 
+  const lang = props.lang === 'random' ? detail.randomLang : props.lang
+  const { name } = names[lang]
+
+  const flavorText = flavorTexts[lang] ? flavorTexts[lang] : flavorTexts['en']
+  const { flavor_text, version } = flavorText
+
   return (
-    <div>
-      <span>id={id} name={name} enName={enName}</span>
-      <img src={frontImage} alt="" />
-      <img src={backImage} alt="" />
-      <pre>{flavorText}</pre>
+    <div style={{padding: '8px 0'}}>
+      <p style={{margin: 0}}>id={id} name={name} lang={lang}</p>
+
+      <a href={pokemon.url} target="_blank">
+        <img src={frontImage} alt="" />
+        <img src={backImage} alt="" />
+      </a>
+
+      <p style={{margin: 0}}>version={version.name}</p>
+
+      <pre style={{margin: 0, padding: '0 0 16px'}}>
+        {flavor_text}
+      </pre>
     </div>
   )
 }
