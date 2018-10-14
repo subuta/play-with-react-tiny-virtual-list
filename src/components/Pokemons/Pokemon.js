@@ -5,6 +5,8 @@ import { hot } from 'react-hot-loader'
 import Promise from '../../utils/promise'
 import fetch from '../../utils/fetch'
 
+import withMeasure from '../../hocs/withMeasure'
+
 import _ from 'lodash'
 
 import {
@@ -50,10 +52,11 @@ const getPokemonDetail = (id) => new Promise(async (resolve) => {
 
 const enhance = compose(
   hot(module),
+  withMeasure,
   withState('detail', 'setDetail', null),
   lifecycle({
     componentDidMount () {
-      const { pokemon, setDetail } = this.props
+      const { pokemon, setDetail, observe } = this.props
       // Keep promise reference for cancel.
       this.promise = getPokemonDetail(pokemon.id).then(detail => setDetail(detail))
     },
@@ -75,6 +78,7 @@ const Pokemon = (props) => {
   const {
     detail = {},
     pokemon,
+    setMeasureRef
   } = props
 
   const {
@@ -93,17 +97,17 @@ const Pokemon = (props) => {
   const { flavor_text, version } = flavorTextEntry
 
   return (
-    <div style={{padding: '8px 0'}}>
-      <p style={{margin: 0}}>id={id} name={name} lang={lang}</p>
+    <div style={{ padding: '8px 0' }} ref={setMeasureRef}>
+      <p style={{ margin: 0 }}>id={id} name={name} lang={lang}</p>
 
       <a href={pokemon.url} target="_blank">
         <img src={frontImage} alt="" />
         <img src={backImage} alt="" />
       </a>
 
-      <p style={{margin: 0}}>version={version.name}</p>
+      <p style={{ margin: 0 }}>version={version.name}</p>
 
-      <pre style={{margin: 0, padding: '0 0 16px'}}>
+      <pre style={{ margin: 0, padding: '0 0 16px' }}>
         {flavor_text}
       </pre>
     </div>

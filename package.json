@@ -33,6 +33,7 @@
   "devDependencies": {
     "poi": "^10.2.10",
     "react-hot-loader": "^4.3.11",
+    "resize-observer-polyfill": "^1.5.0",
     "serve": "^10.0.2"
   }
 }

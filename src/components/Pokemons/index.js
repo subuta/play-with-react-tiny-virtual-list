@@ -16,7 +16,6 @@ import {
   compose,
   lifecycle,
   withPropsOnChange,
-  withState,
   withStateHandlers
 } from 'recompose'
 
@@ -27,17 +26,6 @@ const POKE_URL_ID_REGEX = 'https://pokeapi.co/api/v2/pokemon/([0-9]+)/'
 const enhance = compose(
   hot(module),
   mapVh,
-  withStateHandlers(
-    () => ({ query: {}, pokemons: [], scrollToIndex: 0, draftScrollToIndex: '' }),
-    {
-      setQuery: () => (query) => ({ query }),
-      setPokemons: () => (pokemons) => ({ pokemons }),
-      setDraftScrollToIndex: () => (e) => ({draftScrollToIndex: e.target.value}),
-      setScrollToIndex: () => (value) => ({
-        scrollToIndex: _.isNaN(Number(value)) ? 0 : Number(value)
-      })
-    }
-  ),
   withPropsOnChange(
     (props, nextProps) => !_.isEqual(props.location, nextProps.location),
     ({ location }) => {
@@ -45,6 +33,29 @@ const enhance = compose(
       return {
         query: {
           lang: query.lang || 'en'
+        }
+      }
+    }
+  ),
+  withStateHandlers(
+    () => ({
+      query: {},
+      pokemons: [],
+      scrollToIndex: 0,
+      draftScrollToIndex: '',
+      itemSizes: {}
+    }),
+    {
+      setQuery: () => (query) => ({ query }),
+      setPokemons: () => (pokemons) => ({ pokemons }),
+      setDraftScrollToIndex: () => (e) => ({ draftScrollToIndex: e.target.value }),
+      setScrollToIndex: () => (value) => ({
+        scrollToIndex: _.isNaN(Number(value)) ? 0 : Number(value)
+      }),
+      setItemSizes: ({ itemSizes }) => (index, height) => {
+        itemSizes[index] = height
+        return {
+          itemSizes
         }
       }
     }
@@ -67,7 +78,7 @@ const enhance = compose(
       const isQueryChanged = !_.isEqual(props.query, nextProps.query)
       return isPokemonsChanged || isQueryChanged
     },
-    ({ pokemons, query }) => {
+    ({ pokemons, query, setItemSizes }) => {
       return {
         renderItem: ({ style, index }) => {
           const pokemon = pokemons[index]
@@ -81,6 +92,7 @@ const enhance = compose(
                 <Pokemon
                   pokemon={pokemon}
                   lang={query.lang}
+                  // onMeasure={({ height }) => setItemSizes(index, height)}
                 />
               </div>
             </div>
@@ -89,6 +101,22 @@ const enhance = compose(
       }
     }
   )
+  // withPropsOnChange(
+  //   (props, nextProps) => {
+  //     const isItemSizesChanged = !_.isEqual(props.itemSizes, nextProps.itemSizes)
+  //     console.log('props.itemSizes = ', props.itemSizes)
+  //     console.log('nextProps.itemSizes = ', nextProps.itemSizes)
+  //     console.log('itemCountchanged?', props.itemCount !== nextProps.itemCount)
+  //     return isItemSizesChanged || props.itemCount !== nextProps.itemCount
+  //   },
+  //   ({ itemCount, query, setItemSizes, itemSizes }) => {
+  //     const filledItemSizes = _.merge( _.fill(new Array(itemCount), 200), _.values(itemSizes))
+  //     console.log('_.values(itemSizes) = ', _.values(itemSizes))
+  //     return {
+  //       filledItemSizes: _.fill(new Array(1000), 200)
+  //     }
+  //   }
+  // )
 )
 
 // Looks like PokeAPI does not provides `Pokemon Sun & Moon` data currently(2018/10/14) ;)
@@ -103,7 +131,9 @@ const Pokemons = (props) => {
     setScrollToIndex,
     scrollToIndex,
     renderItem,
-    setRef
+    setRef,
+    heightCache,
+    itemSizes
   } = props
 
   // Toggle lang.
@@ -116,6 +146,8 @@ const Pokemons = (props) => {
     nextLang = 'en'
   }
 
+  console.log('render!!!')
+
   return (
     <>
       <div style={{
@@ -123,14 +155,17 @@ const Pokemons = (props) => {
         top: 0,
         right: 0,
         zIndex: 100,
-        backgroundColor: 'white'
+        backgroundColor: 'white',
+        padding: 8
       }}>
-        <form onSubmit={(e) => {
-          e.preventDefault()
-          setScrollToIndex(draftScrollToIndex)
-        }}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            setScrollToIndex(draftScrollToIndex)
+          }}
+        >
           <label>
-            <span>No:</span>
+            <span style={{ marginRight: 4 }}>No</span>
 
             <input
               type="number"
@@ -139,19 +174,25 @@ const Pokemons = (props) => {
             />
           </label>
 
-          <button onClick={() => setScrollToIndex(draftScrollToIndex)}>Go</button>
+          <button
+            style={{ marginLeft: 8 }}
+            onClick={() => setScrollToIndex(draftScrollToIndex)}
+          >
+            Go
+          </button>
         </form>
       </div>
 
       <VirtualList
         // Extra props for update list on query changes.
         lang={query.lang}
+
+        // react-tiny-virtual-list props.
         width='100vw'
         height={vh}
         itemCount={pokemons.length}
         renderItem={renderItem}
-        // itemSize={(index) => pokemons[index].randomSize}
-        itemSize={224}
+        itemSize={200}
         scrollToIndex={scrollToIndex}
         ref={setRef}
       />
