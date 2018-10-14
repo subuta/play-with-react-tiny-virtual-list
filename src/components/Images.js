@@ -29,7 +29,6 @@ const enhance = compose(
       let photos = await fetch('https://picsum.photos/list')
 
       photos = _.map(photos, (photo) => {
-        console.log('hasLargeScreen = ', hasLargeScreen)
         if (hasLargeScreen) {
           photo.randomSize = _.random(3, 8) * 100
         } else {
