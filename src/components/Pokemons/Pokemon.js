@@ -97,18 +97,21 @@ const Pokemon = (props) => {
   const { flavor_text, version } = flavorTextEntry
 
   return (
-    <div style={{ padding: '8px 0' }} ref={setMeasureRef}>
-      <p style={{ margin: 0 }}>id={id} name={name} lang={lang}</p>
+    <div ref={setMeasureRef} style={{color: 'white'}}>
+      <p style={{margin: 0}}>
+        <span style={{ background: 'white', padding: '0 8px', color: 'black' }}>
+          Row #{id} name={name} lang={lang}
+        </span>
+      </p>
 
       <a href={pokemon.url} target="_blank">
         <img src={frontImage} alt="" />
         <img src={backImage} alt="" />
       </a>
 
-      <p style={{ margin: 0 }}>version={version.name}</p>
-
-      <pre style={{ margin: 0, padding: '0 0 16px' }}>
+      <pre style={{ margin: '0 0 0 8px', padding: '0 0 16px' }}>
         {flavor_text}
+        <b>({version.name})</b>
       </pre>
     </div>
   )

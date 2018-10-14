@@ -76,7 +76,7 @@ const enhance = compose(
 
         if (listRef) {
           refresh = _.debounce(() => listRef.recomputeSizes(), 1000 / 60)
-          debouncedForceUpdate = _.debounce(() => listRef.forceUpdate(), 100)
+          debouncedForceUpdate = _.debounce(() => listRef.forceUpdate(), 1000 / 60)
         }
       },
 
@@ -104,21 +104,15 @@ const enhance = compose(
         renderItem: ({ style, index }) => {
           const pokemon = pokemons[index]
           return (
-            <div className="Row" style={{ ...style }} key={index}>
-              <span style={{ background: 'white', padding: '0 8px' }}>
-                Row #{index} name={pokemon.name}
-              </span>
-
-              <div style={{ color: 'white' }}>
-                <Pokemon
-                  pokemon={pokemon}
-                  lang={query.lang}
-                  onMeasure={({ height }) => {
-                    setItemSizesCache(index, height)
-                    forceUpdate()
-                  }}
-                />
-              </div>
+            <div className="row" style={{ ...style }} key={index}>
+              <Pokemon
+                pokemon={pokemon}
+                lang={query.lang}
+                onMeasure={({ height }) => {
+                  setItemSizesCache(index, height)
+                  forceUpdate()
+                }}
+              />
             </div>
           )
         },
@@ -208,8 +202,7 @@ const Pokemons = (props) => {
         itemSize={(index) => {
           return getItemSizes()[index] || 200
         }}
-
-        scrollToIndex={scrollToIndex}
+        scrollToIndex={scrollToIndex || null}
         ref={setListRef}
       />
 

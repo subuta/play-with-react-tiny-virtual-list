@@ -15,6 +15,10 @@ const app = (
         -webkit-font-smoothing: antialiased;
         text-rendering: optimizeLegibility;
       }
+
+      .row {
+        transition: all 0.1s cubic-bezier(0.4, 0.0, 0.2, 1);
+      }
     `}</style>
 
     <HashRouter>
