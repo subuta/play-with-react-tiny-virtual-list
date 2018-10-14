@@ -68,25 +68,19 @@ const enhance = compose(
     let itemSizesCache = []
     let listRef = null
     let refresh = _.noop
-    let debouncedForceUpdate = _.noop
 
     return {
       setListRef: () => (ref) => {
         listRef = ref
 
         if (listRef) {
-          refresh = _.debounce(() => listRef && listRef.recomputeSizes(), 1000 / 60)
-          debouncedForceUpdate = _.debounce(() => listRef && listRef.forceUpdate(), 1000 / 60)
+          refresh = () => requestAnimationFrame(() => listRef && listRef.recomputeSizes())
         }
       },
 
       setItemSizesCache: () => (index, height) => {
         itemSizesCache[index] = height
         refresh()
-      },
-
-      forceUpdate: () => () => {
-        debouncedForceUpdate()
       },
 
       getItemSizesCache: () => () => itemSizesCache
@@ -98,7 +92,7 @@ const enhance = compose(
       const isQueryChanged = !_.isEqual(props.query, nextProps.query)
       return isPokemonsChanged || isQueryChanged
     },
-    ({ pokemons, query, setItemSizesCache, getItemSizesCache, forceUpdate }) => {
+    ({ pokemons, query, setItemSizesCache, getItemSizesCache }) => {
       return {
         renderItem: ({ style, index }) => {
           const pokemon = pokemons[index]
@@ -107,10 +101,7 @@ const enhance = compose(
               <Pokemon
                 pokemon={pokemon}
                 lang={query.lang}
-                onMeasure={({ height }) => {
-                  setItemSizesCache(index, height)
-                  forceUpdate()
-                }}
+                onMeasure={({ height }) => setItemSizesCache(index, height)}
               />
             </div>
           )
@@ -201,6 +192,7 @@ const Pokemons = (props) => {
         itemSize={(index) => {
           return getItemSizes()[index] || 200
         }}
+        overscanCount={9}
         scrollToIndex={scrollToIndex || null}
         ref={setListRef}
       />

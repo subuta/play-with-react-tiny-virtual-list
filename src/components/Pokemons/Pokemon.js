@@ -109,7 +109,7 @@ const Pokemon = (props) => {
         <img src={backImage} alt="" />
       </a>
 
-      <pre style={{ margin: '0 0 0 8px', padding: '0 0 16px' }}>
+      <pre style={{ margin: '0 0 0 8px', padding: '0 0 16px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
         {flavor_text}
         <b>({version.name})</b>
       </pre>
