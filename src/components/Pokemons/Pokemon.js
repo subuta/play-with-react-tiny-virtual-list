@@ -15,37 +15,38 @@ import {
   renderComponent
 } from 'recompose'
 
-const getPokemonDetail = (id) => {
-  return Promise.all([
-    fetch(`https://pokeapi.co/api/v2/pokemon/${id}/`),
-    fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}/`)
-  ]).then(([info, spec]) => {
-    const randomLang = _.get(_.sample(spec.names), 'language.name')
+const getPokemonDetail = (id) => new Promise(async (resolve) => {
+  const info = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}/`)
 
-    const getLocaled = (collection) => {
-      const grouped = _.groupBy(collection, 'language.name')
-      const picked = _.pick(grouped, ['ja', 'en', randomLang])
-      return _.transform(picked, (result, values, key) => {
-        result[key] = _.first(values)
-      }, {})
-    }
+  const speciesUrl = _.get(info, 'species.url', `https://pokeapi.co/api/v2/pokemon-species/${id}/`)
 
-    // Fetch attributes from response.
-    const names = getLocaled(spec.names)
-    const frontImage = _.get(info, 'sprites.front_default', null)
-    const backImage = _.get(info, 'sprites.back_default', null)
-    const flavorTexts = getLocaled(spec.flavor_text_entries)
+  const spec = await fetch(speciesUrl)
 
-    return {
-      id,
-      frontImage,
-      backImage,
-      names,
-      flavorTexts,
-      randomLang
-    }
+  const randomLang = _.get(_.sample(spec.names), 'language.name')
+
+  const getLocaled = (collection) => {
+    const grouped = _.groupBy(collection, 'language.name')
+    const picked = _.pick(grouped, ['ja', 'en', randomLang])
+    return _.transform(picked, (result, values, key) => {
+      result[key] = _.first(values)
+    }, {})
+  }
+
+  // Fetch attributes from response.
+  const names = getLocaled(spec.names)
+  const frontImage = _.get(info, 'sprites.front_default', null)
+  const backImage = _.get(info, 'sprites.back_default', null)
+  const flavorTexts = getLocaled(spec.flavor_text_entries)
+
+  resolve({
+    id,
+    frontImage,
+    backImage,
+    names,
+    flavorTexts,
+    randomLang
   })
-}
+})
 
 const enhance = compose(
   hot(module),
@@ -85,10 +86,11 @@ const Pokemon = (props) => {
   } = detail
 
   const lang = props.lang === 'random' ? detail.randomLang : props.lang
-  const { name } = names[lang]
+  const nameEntry = names[lang] ? names[lang] : names['en']
+  const { name } = nameEntry
 
-  const flavorText = flavorTexts[lang] ? flavorTexts[lang] : flavorTexts['en']
-  const { flavor_text, version } = flavorText
+  const flavorTextEntry = flavorTexts[lang] ? flavorTexts[lang] : flavorTexts['en']
+  const { flavor_text, version } = flavorTextEntry
 
   return (
     <div style={{padding: '8px 0'}}>

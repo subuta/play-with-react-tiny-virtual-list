@@ -16,7 +16,8 @@ import {
   compose,
   lifecycle,
   withPropsOnChange,
-  withState
+  withState,
+  withStateHandlers
 } from 'recompose'
 
 import mapVh from '../../hocs/mapVh'
@@ -26,13 +27,25 @@ const POKE_URL_ID_REGEX = 'https://pokeapi.co/api/v2/pokemon/([0-9]+)/'
 const enhance = compose(
   hot(module),
   mapVh,
-  withState('query', 'setQuery', {}),
-  withState('pokemons', 'setPokemons', []),
+  withStateHandlers(
+    () => ({ query: {}, pokemons: [], scrollToIndex: 0, draftScrollToIndex: '' }),
+    {
+      setQuery: () => (query) => ({ query }),
+      setPokemons: () => (pokemons) => ({ pokemons }),
+      setDraftScrollToIndex: () => (e) => ({draftScrollToIndex: e.target.value}),
+      setScrollToIndex: () => (value) => ({
+        scrollToIndex: _.isNaN(Number(value)) ? 0 : Number(value)
+      })
+    }
+  ),
   withPropsOnChange(
     (props, nextProps) => !_.isEqual(props.location, nextProps.location),
     ({ location }) => {
+      const query = qs.parse(location.search.split('?')[1])
       return {
-        query: qs.parse(location.search.split('?')[1])
+        query: {
+          lang: query.lang || 'en'
+        }
       }
     }
   ),
@@ -64,7 +77,7 @@ const enhance = compose(
                 Row #{index} name={pokemon.name}
               </span>
 
-              <div style={{color: 'white'}}>
+              <div style={{ color: 'white' }}>
                 <Pokemon
                   pokemon={pokemon}
                   lang={query.lang}
@@ -78,11 +91,17 @@ const enhance = compose(
   )
 )
 
+// Looks like PokeAPI does not provides `Pokemon Sun & Moon` data currently(2018/10/14) ;)
+// SEE: https://github.com/PokeAPI/pokeapi/issues/112
 const Pokemons = (props) => {
   const {
     query,
     vh,
     pokemons,
+    draftScrollToIndex,
+    setDraftScrollToIndex,
+    setScrollToIndex,
+    scrollToIndex,
     renderItem,
     setRef
   } = props
@@ -99,6 +118,31 @@ const Pokemons = (props) => {
 
   return (
     <>
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        zIndex: 100,
+        backgroundColor: 'white'
+      }}>
+        <form onSubmit={(e) => {
+          e.preventDefault()
+          setScrollToIndex(draftScrollToIndex)
+        }}>
+          <label>
+            <span>No:</span>
+
+            <input
+              type="number"
+              onChange={setDraftScrollToIndex}
+              value={draftScrollToIndex}
+            />
+          </label>
+
+          <button onClick={() => setScrollToIndex(draftScrollToIndex)}>Go</button>
+        </form>
+      </div>
+
       <VirtualList
         // Extra props for update list on query changes.
         lang={query.lang}
@@ -108,6 +152,7 @@ const Pokemons = (props) => {
         renderItem={renderItem}
         // itemSize={(index) => pokemons[index].randomSize}
         itemSize={224}
+        scrollToIndex={scrollToIndex}
         ref={setRef}
       />
 
@@ -124,8 +169,8 @@ const Pokemons = (props) => {
         justifyContent: 'space-between'
       }}>
         <span>
+          <Link to="/images">/images</Link> |&nbsp;
           <Link to={`/pokemons?lang=${nextLang}`} style={{ marginRight: 16 }}>/pokemons?lang={nextLang}</Link>
-          <Link to="/images">/images</Link>
         </span>
         <span>SEE: <a href='https://pokeapi.co/' target='_blank'>PokéAPI</a> for more Pokemons!</span>
       </footer>
