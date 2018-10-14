@@ -75,8 +75,8 @@ const enhance = compose(
         listRef = ref
 
         if (listRef) {
-          refresh = _.debounce(() => listRef.recomputeSizes(), 1000 / 60)
-          debouncedForceUpdate = _.debounce(() => listRef.forceUpdate(), 1000 / 60)
+          refresh = _.debounce(() => listRef && listRef.recomputeSizes(), 1000 / 60)
+          debouncedForceUpdate = _.debounce(() => listRef && listRef.forceUpdate(), 1000 / 60)
         }
       },
 
@@ -86,7 +86,6 @@ const enhance = compose(
       },
 
       forceUpdate: () => () => {
-        if (!listRef) return
         debouncedForceUpdate()
       },
 
@@ -118,7 +117,7 @@ const enhance = compose(
         },
 
         getItemSizes: () => {
-          const filled = _.fill(new Array(pokemons.length), 200)
+          const filled = _.fill(new Array(pokemons.length), 0)
           const itemSizesCache = getItemSizesCache()
           return _.merge(filled, itemSizesCache)
         }

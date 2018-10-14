@@ -13,7 +13,6 @@ import {
   compose,
   lifecycle,
   withState,
-  withProps,
   withPropsOnChange
 } from 'recompose'
 
