@@ -100,7 +100,7 @@ const Pokemon = (props) => {
     <div ref={setMeasureRef} style={{color: 'white'}}>
       <p style={{margin: 0}}>
         <span style={{ background: 'white', padding: '0 8px', color: 'black' }}>
-          Row #{id} name={name} lang={lang}
+          No.{id} name={name} lang={lang}
         </span>
       </p>
 
@@ -109,7 +109,12 @@ const Pokemon = (props) => {
         <img src={backImage} alt="" />
       </a>
 
-      <pre style={{ margin: '0 0 0 8px', padding: '0 0 16px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
+      <pre style={{
+        margin: '0 0 0 8px',
+        padding: '0 0 16px',
+        wordBreak: 'break-word',
+        whiteSpace: 'pre-wrap'
+      }}>
         {flavor_text}
         <b>({version.name})</b>
       </pre>

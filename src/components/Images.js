@@ -18,6 +18,8 @@ import {
 
 import mapVh from '../hocs/mapVh'
 
+const hasLargeScreen = window.innerWidth >= 576
+
 const enhance = compose(
   hot(module),
   mapVh,
@@ -27,7 +29,12 @@ const enhance = compose(
       let photos = await fetch('https://picsum.photos/list')
 
       photos = _.map(photos, (photo) => {
-        photo.randomSize = _.random(3, 8) * 100
+        console.log('hasLargeScreen = ', hasLargeScreen)
+        if (hasLargeScreen) {
+          photo.randomSize = _.random(3, 8) * 100
+        } else {
+          photo.randomSize = _.random(1, 4) * 100
+        }
         return photo
       })
 
@@ -68,20 +75,9 @@ const Images = ({ photos, renderItem, vh }) => {
         itemSize={(index) => photos[index].randomSize}
       />
 
-      <footer style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        padding: '8px 8px 32px',
-        background: 'white',
-        color: '#242424',
-        textAlign: 'right',
-        display: 'flex',
-        justifyContent: 'space-between'
-      }}>
+      <footer>
         <Link to="/pokemons">/pokemons</Link>
-        <span>SEE: <a href="https://picsum.photos/" target='_blank'>Lorem Picsum</a> for more images.</span>
+        <span className="c-credits">SEE: <a href="https://picsum.photos/" target='_blank'>Lorem Picsum</a> for more images.</span>
       </footer>
     </>
   )

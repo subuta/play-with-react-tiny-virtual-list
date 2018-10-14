@@ -41,15 +41,18 @@ const enhance = compose(
   withStateHandlers(
     () => ({
       pokemons: [],
-      scrollToIndex: 0,
+      scrollToIndex: null,
       draftScrollToIndex: ''
     }),
     {
       setPokemons: () => (pokemons) => ({ pokemons }),
       setDraftScrollToIndex: () => (e) => ({ draftScrollToIndex: e.target.value }),
-      setScrollToIndex: () => (value) => ({
-        scrollToIndex: _.isNaN(Number(value)) ? 0 : Number(value)
-      })
+      setScrollToIndex: () => (value) => {
+        if (value === '') return { scrollToIndex: null }
+        return {
+          scrollToIndex: _.isNaN(Number(value)) ? null : Number(value) // For array.
+        }
+      }
     }
   ),
   lifecycle({
@@ -147,14 +150,7 @@ const Pokemons = (props) => {
 
   return (
     <>
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        zIndex: 100,
-        backgroundColor: 'white',
-        padding: 8
-      }}>
+      <div className="c-search-form">
         <form
           onSubmit={(e) => {
             e.preventDefault()
@@ -168,6 +164,7 @@ const Pokemons = (props) => {
               type="number"
               onChange={setDraftScrollToIndex}
               value={draftScrollToIndex}
+              style={{width: 40}}
             />
           </label>
 
@@ -189,31 +186,18 @@ const Pokemons = (props) => {
         height={vh}
         itemCount={itemCount}
         renderItem={renderItem}
-        itemSize={(index) => {
-          return getItemSizes()[index] || 200
-        }}
-        overscanCount={9}
-        scrollToIndex={scrollToIndex || null}
+        itemSize={(index) => getItemSizes()[index] || 200}
+        overscanCount={6}
+        scrollToIndex={scrollToIndex == null ? null : scrollToIndex - 1}
         ref={setListRef}
       />
 
-      <footer style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        padding: '8px 8px 32px',
-        background: 'white',
-        color: '#242424',
-        textAlign: 'right',
-        display: 'flex',
-        justifyContent: 'space-between'
-      }}>
+      <footer>
         <span>
           <Link to="/images">/images</Link> |&nbsp;
           <Link to={`/pokemons?lang=${nextLang}`} style={{ marginRight: 16 }}>/pokemons?lang={nextLang}</Link>
         </span>
-        <span>SEE: <a href='https://pokeapi.co/' target='_blank'>PokéAPI</a> for more Pokemons!</span>
+        <span className="c-credits">SEE: <a href='https://pokeapi.co/' target='_blank'>PokéAPI</a> for more Pokemons!</span>
       </footer>
     </>
   )
