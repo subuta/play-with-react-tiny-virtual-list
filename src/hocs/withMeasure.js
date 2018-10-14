@@ -41,7 +41,7 @@ export default compose(
       Promise.map(imgs, (img) => new Promise((resolve) => {
         // Resolve on each image loaded.
         img.onload = () => resolve()
-      })).then(() => requestAnimationFrame(() => onMeasure({ ...size, isLoaded: true })))
+      })).then(() => onMeasure({ ...size, isLoaded: true }))
 
       return () => {
         ro.unobserve(ref)
