@@ -187,7 +187,7 @@ const Pokemons = (props) => {
         itemCount={itemCount}
         renderItem={renderItem}
         itemSize={(index) => getItemSizes()[index] || 200}
-        overscanCount={6}
+        overscanCount={5}
         scrollToIndex={scrollToIndex == null ? null : scrollToIndex - 1}
         ref={setListRef}
       />

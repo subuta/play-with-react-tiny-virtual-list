@@ -5,12 +5,16 @@ import {
 } from 'recompose'
 import _ from 'lodash'
 
+import Promise from 'bluebird'
+
 import ResizeObserver from 'resize-observer-polyfill'
 
 export default compose(
   withProps(({ onMeasure = _.noop }) => {
     let ref = null
     let unobserve = _.noop
+
+    let size = { height: 0, width: 0 }
 
     const ro = new ResizeObserver((entries) => {
       const {contentRect} = _.first(entries)
@@ -20,7 +24,7 @@ export default compose(
       const clientHeight = top + paddingBottom + height
       const clientWidth = left + paddingRight + width
 
-      const size = {
+      size = {
         height: clientHeight,
         width: clientWidth
       }
@@ -31,6 +35,14 @@ export default compose(
     const observe = () => {
       if (!ref) return
       ro.observe(ref)
+
+      const imgs = ref.querySelectorAll('img')
+
+      Promise.map(imgs, (img) => new Promise((resolve) => {
+        // Resolve on each image loaded.
+        img.onload = () => resolve()
+      })).then(() => requestAnimationFrame(() => onMeasure({ ...size, isLoaded: true })))
+
       return () => {
         ro.unobserve(ref)
         ref = null
