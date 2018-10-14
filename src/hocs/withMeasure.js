@@ -13,17 +13,19 @@ export default compose(
     let unobserve = _.noop
 
     const ro = new ResizeObserver((entries) => {
-      _.each(entries, ({contentRect}) => {
-        const { top, right, bottom, left, height, width } = contentRect
-        const paddingBottom = bottom - height
-        const paddingRight = right - width
-        const clientHeight = top + paddingBottom + height
-        const clientWidth = left + paddingRight + width
-        onMeasure({
-          height: clientHeight,
-          width: clientWidth
-        })
-      })
+      const {contentRect} = _.first(entries)
+      const { top, right, bottom, left, height, width } = contentRect
+      const paddingBottom = bottom - height
+      const paddingRight = right - width
+      const clientHeight = top + paddingBottom + height
+      const clientWidth = left + paddingRight + width
+
+      const size = {
+        height: clientHeight,
+        width: clientWidth
+      }
+
+      onMeasure(size)
     })
 
     const observe = () => {

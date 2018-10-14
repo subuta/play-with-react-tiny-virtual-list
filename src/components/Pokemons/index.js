@@ -15,6 +15,7 @@ import Pokemon from './Pokemon'
 import {
   compose,
   lifecycle,
+  withHandlers,
   withPropsOnChange,
   withStateHandlers
 } from 'recompose'
@@ -39,25 +40,16 @@ const enhance = compose(
   ),
   withStateHandlers(
     () => ({
-      query: {},
       pokemons: [],
       scrollToIndex: 0,
-      draftScrollToIndex: '',
-      itemSizes: {}
+      draftScrollToIndex: ''
     }),
     {
-      setQuery: () => (query) => ({ query }),
       setPokemons: () => (pokemons) => ({ pokemons }),
       setDraftScrollToIndex: () => (e) => ({ draftScrollToIndex: e.target.value }),
       setScrollToIndex: () => (value) => ({
         scrollToIndex: _.isNaN(Number(value)) ? 0 : Number(value)
-      }),
-      setItemSizes: ({ itemSizes }) => (index, height) => {
-        itemSizes[index] = height
-        return {
-          itemSizes
-        }
-      }
+      })
     }
   ),
   lifecycle({
@@ -72,13 +64,42 @@ const enhance = compose(
       this.props.setPokemons(pokemons)
     }
   }),
+  withHandlers(() => {
+    let itemSizesCache = []
+    let listRef = null
+    let refresh = _.noop
+    let debouncedForceUpdate = _.noop
+
+    return {
+      setListRef: () => (ref) => {
+        listRef = ref
+
+        if (listRef) {
+          refresh = _.debounce(() => listRef.recomputeSizes(), 1000 / 60)
+          debouncedForceUpdate = _.debounce(() => listRef.forceUpdate(), 100)
+        }
+      },
+
+      setItemSizesCache: () => (index, height) => {
+        itemSizesCache[index] = height
+        refresh()
+      },
+
+      forceUpdate: () => () => {
+        if (!listRef) return
+        debouncedForceUpdate()
+      },
+
+      getItemSizesCache: () => () => itemSizesCache
+    }
+  }),
   withPropsOnChange(
     (props, nextProps) => {
       const isPokemonsChanged = props.pokemons.length !== nextProps.pokemons.length
       const isQueryChanged = !_.isEqual(props.query, nextProps.query)
       return isPokemonsChanged || isQueryChanged
     },
-    ({ pokemons, query, setItemSizes }) => {
+    ({ pokemons, query, setItemSizesCache, getItemSizesCache, forceUpdate }) => {
       return {
         renderItem: ({ style, index }) => {
           const pokemon = pokemons[index]
@@ -92,31 +113,24 @@ const enhance = compose(
                 <Pokemon
                   pokemon={pokemon}
                   lang={query.lang}
-                  // onMeasure={({ height }) => setItemSizes(index, height)}
+                  onMeasure={({ height }) => {
+                    setItemSizesCache(index, height)
+                    forceUpdate()
+                  }}
                 />
               </div>
             </div>
           )
+        },
+
+        getItemSizes: () => {
+          const filled = _.fill(new Array(pokemons.length), 200)
+          const itemSizesCache = getItemSizesCache()
+          return _.merge(filled, itemSizesCache)
         }
       }
     }
   )
-  // withPropsOnChange(
-  //   (props, nextProps) => {
-  //     const isItemSizesChanged = !_.isEqual(props.itemSizes, nextProps.itemSizes)
-  //     console.log('props.itemSizes = ', props.itemSizes)
-  //     console.log('nextProps.itemSizes = ', nextProps.itemSizes)
-  //     console.log('itemCountchanged?', props.itemCount !== nextProps.itemCount)
-  //     return isItemSizesChanged || props.itemCount !== nextProps.itemCount
-  //   },
-  //   ({ itemCount, query, setItemSizes, itemSizes }) => {
-  //     const filledItemSizes = _.merge( _.fill(new Array(itemCount), 200), _.values(itemSizes))
-  //     console.log('_.values(itemSizes) = ', _.values(itemSizes))
-  //     return {
-  //       filledItemSizes: _.fill(new Array(1000), 200)
-  //     }
-  //   }
-  // )
 )
 
 // Looks like PokeAPI does not provides `Pokemon Sun & Moon` data currently(2018/10/14) ;)
@@ -131,9 +145,8 @@ const Pokemons = (props) => {
     setScrollToIndex,
     scrollToIndex,
     renderItem,
-    setRef,
-    heightCache,
-    itemSizes
+    setListRef,
+    getItemSizes
   } = props
 
   // Toggle lang.
@@ -146,7 +159,7 @@ const Pokemons = (props) => {
     nextLang = 'en'
   }
 
-  console.log('render!!!')
+  const itemCount = pokemons.length
 
   return (
     <>
@@ -190,11 +203,14 @@ const Pokemons = (props) => {
         // react-tiny-virtual-list props.
         width='100vw'
         height={vh}
-        itemCount={pokemons.length}
+        itemCount={itemCount}
         renderItem={renderItem}
-        itemSize={200}
+        itemSize={(index) => {
+          return getItemSizes()[index] || 200
+        }}
+
         scrollToIndex={scrollToIndex}
-        ref={setRef}
+        ref={setListRef}
       />
 
       <footer style={{

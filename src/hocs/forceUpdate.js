@@ -23,7 +23,7 @@ export default compose(
   lifecycle({
     componentWillUnmount () {
       // Clear old ref.
-      this.props.setRef(null)
+      this.props.setRefForForceUpdate(null)
     }
   })
 )
