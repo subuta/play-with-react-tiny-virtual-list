@@ -75,8 +75,12 @@ const Images = ({ photos, renderItem, vh }) => {
       />
 
       <footer>
-        <Link to="/pokemons">/pokemons</Link>
-        <span className="c-credits">SEE: <a href="https://picsum.photos/" target='_blank'>Lorem Picsum</a> for more images.</span>
+        <span>
+          <Link to="/pokemons">/pokemons</Link> |&nbsp;
+          <Link to="/load-more">/load-more</Link>
+        </span>
+
+        <span className="c-comment">SEE: <a href="https://picsum.photos/" target='_blank'>Lorem Picsum</a> for more images.</span>
       </footer>
     </>
   )

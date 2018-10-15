@@ -194,10 +194,11 @@ const Pokemons = (props) => {
 
       <footer>
         <span>
+          <Link to="/load-more">/load-more</Link> |&nbsp;
           <Link to="/images">/images</Link> |&nbsp;
           <Link to={`/pokemons?lang=${nextLang}`} style={{ marginRight: 16 }}>/pokemons?lang={nextLang}</Link>
         </span>
-        <span className="c-credits">SEE: <a href='https://pokeapi.co/' target='_blank'>PokéAPI</a> for more Pokemons!</span>
+        <span className="c-comment">SEE: <a href='https://pokeapi.co/' target='_blank'>PokéAPI</a> for more Pokemons!</span>
       </footer>
     </>
   )

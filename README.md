@@ -6,6 +6,12 @@ Demo: https://subuta.github.io/play-with-react-tiny-virtual-list/
 
 <img src="assets/preview.png" width="1058" height="auto">
 
+### Included examples.
+
+- `/images` -> Load images with fixed(passed from API) height/width.
+- `/pokemons` -> Each row requests Pokemon data at render and load images(Good example for variable height contents).
+- `/load-more` -> Scroll up to load more contents with loading component(Good example for variable list length)
+
 ### How to develop
 
 ```

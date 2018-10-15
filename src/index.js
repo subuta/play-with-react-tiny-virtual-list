@@ -4,6 +4,7 @@ import { HashRouter, Switch, Route, Redirect } from 'react-router-dom'
 
 import Images from './components/Images'
 import Pokemons from './components/Pokemons'
+import LoadMore from './components/LoadMore'
 
 const app = (
   <div>
@@ -36,7 +37,7 @@ const app = (
           max-width: 100vw;
       }
 
-      .c-credits {
+      .c-comment {
         margin: 8px 0 0;
       }
 
@@ -70,6 +71,7 @@ const app = (
         <Redirect exact from='/' to='/images' />
         <Route exact path='/images' component={Images} />
         <Route exact path='/pokemons' component={Pokemons} />
+        <Route exact path='/load-more' component={LoadMore} />
       </Switch>
     </HashRouter>
   </div>
