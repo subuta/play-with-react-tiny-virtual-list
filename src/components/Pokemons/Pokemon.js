@@ -105,8 +105,9 @@ const Pokemon = (props) => {
       </p>
 
       <a href={pokemon.url} target="_blank">
-        <img src={frontImage} alt="" />
-        <img src={backImage} alt="" />
+        {/* All images are 96x96 at PokeAPI */}
+        <img src={frontImage} style={{minHeight: 96}} alt="" />
+        <img src={backImage} style={{minHeight: 96}} alt="" />
       </a>
 
       <pre style={{
