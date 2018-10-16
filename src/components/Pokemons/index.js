@@ -77,7 +77,7 @@ const enhance = compose(
         listRef = ref
 
         if (listRef) {
-          refresh = () => requestAnimationFrame(() => listRef && listRef.recomputeSizes())
+          refresh = (index) => listRef.recomputeSizes()
         }
       },
 

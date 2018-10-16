@@ -1,20 +1,20 @@
 import {
   compose,
   lifecycle,
-  withProps,
+  withHandlers,
+  withState,
 } from 'recompose'
 import _ from 'lodash'
-
-import Promise from 'bluebird'
 
 import ResizeObserver from 'resize-observer-polyfill'
 
 export default compose(
-  withProps(({ onMeasure = _.noop }) => {
+  withState('size', 'setSize', { height: 0, width: 0 }),
+  withHandlers(({ setSize }) => {
     let ref = null
     let unobserve = _.noop
 
-    let size = { height: 0, width: 0 }
+    let sizeCache = { height: 0, width: 0 }
 
     const ro = new ResizeObserver((entries) => {
       const {contentRect} = _.first(entries)
@@ -24,25 +24,17 @@ export default compose(
       const clientHeight = top + paddingBottom + height
       const clientWidth = left + paddingRight + width
 
-      size = {
+      sizeCache = {
         height: clientHeight,
         width: clientWidth
       }
 
-      onMeasure(size)
+      setSize(sizeCache)
     })
 
     const observe = () => {
       if (!ref) return
       ro.observe(ref)
-
-      const imgs = ref.querySelectorAll('img')
-
-      Promise.map(imgs, (img) => new Promise((resolve) => {
-        // Resolve on each image loaded.
-        img.onload = () => resolve()
-      })).then(() => onMeasure({ ...size, isLoaded: true }))
-
       return () => {
         ro.unobserve(ref)
         ref = null
@@ -52,12 +44,12 @@ export default compose(
     return {
       observe,
 
-      setMeasureRef: (_ref) => {
+      setSizeRef: () => (_ref) => {
         ref = _ref
         unobserve = observe()
       },
 
-      unobserve: () => {
+      unobserve: () => () => {
         unobserve()
       }
     }

@@ -2,6 +2,7 @@ import React from 'react'
 import { hot } from 'react-hot-loader'
 
 import { Link } from 'react-router-dom'
+import faker from 'faker'
 
 import _ from 'lodash'
 
@@ -10,136 +11,83 @@ import VirtualList from 'react-tiny-virtual-list'
 import {
   compose,
   withHandlers,
-  withPropsOnChange,
-  withStateHandlers,
+  withState,
+  withPropsOnChange
 } from 'recompose'
 
 import mapVh from '../hocs/mapVh'
+import withSize from '../hocs/withSize'
+import withRTVLHandlers from '../hocs/withRTVLHandlers'
 
-const SCROLL_DIRECTION_UP = 'SCROLL_DIRECTION_UP'
-const SCROLL_DIRECTION_NONE = 'SCROLL_DIRECTION_NONE'
-const SCROLL_DIRECTION_DOWN = 'SCROLL_DIRECTION_DOWN'
+const enhanceText = compose(
+  withSize,
+  withPropsOnChange(
+    (props, nextProps) => !_.isEqual(props.size, nextProps.size),
+    ({ size, onMeasure = _.noop }) => {
+      if (size.height === 0) return
+      onMeasure(size)
+    }
+  )
+)
 
-const VIRTUAL_ROWS_SIZE = 50
+const MeasurableText = enhanceText(({ text, setSizeRef, style }) => {
+  return (
+    <p
+      ref={setSizeRef}
+      style={{ ...style, margin: 0 }}
+    >
+      {text}
+    </p>
+  )
+})
 
 const enhance = compose(
   hot(module),
   mapVh,
-  withStateHandlers(
-    () => {
-      const rows = _.fill(Array(20), 1)
-      const virtualRowsCount = rows.length + VIRTUAL_ROWS_SIZE
-      return {
-        overScanCount: 3,
-        virtualRowsCount,
-        rows,
-        initialScrollToIndex: virtualRowsCount - 1
-      }
-    },
-    {
-      prependRows: (state) => (rows) => {
-        const nextRows = [...state.rows, ...rows]
-        const nextVirtualRowsCount = nextRows.length + VIRTUAL_ROWS_SIZE
-        return {
-          virtualRowsCount: nextVirtualRowsCount,
-          rows: nextRows
-        }
-      }
-    }
-  ),
-  withHandlers({
-    getVirtualIndex: ({ virtualRowsCount }) => (index) => {
-      return virtualRowsCount - index - 1
-    }
-  }),
-  withHandlers(({ overScanCount }) => {
-    let lastArg = {
-      startIndex: -1,
-      stopIndex: -1
-    }
-    let scrollDirection = SCROLL_DIRECTION_NONE
-
-    return {
-      compareScroll: () => (arg) => {
-        // Assign lastStartIndex at first render.
-        if (lastArg.startIndex === -1) lastArg.startIndex = arg.startIndex
-        // Ignore no-change.
-        if (lastArg.startIndex === arg.startIndex) return { scrollDirection: SCROLL_DIRECTION_NONE }
-
-        scrollDirection = lastArg.startIndex > arg.startIndex ? SCROLL_DIRECTION_UP : SCROLL_DIRECTION_DOWN
-
-        // Get in-visible (includes overScan) row index.
-        const currentIndex = scrollDirection === SCROLL_DIRECTION_UP ? arg.startIndex : arg.stopIndex
-        // Get visible row index.
-        const visibleCurrentIndex = scrollDirection === SCROLL_DIRECTION_UP ? (arg.startIndex + overScanCount) : (arg.stopIndex - overScanCount)
-
-        // Keep lastArg.
-        lastArg = arg
-
-        return {
-          scrollDirection,
-          currentIndex,
-          visibleCurrentIndex
-        }
-      }
-    }
-  }),
-  withPropsOnChange(
-    ['prependRows'],
-    ({ prependRows }) => ({
-      // Prevent duplicate call.
-      prependRows: _.debounce(prependRows, 300, { leading: true, trailing: false })
-    })
-  ),
-  withHandlers({
-    onLoadMore: ({ prependRows }) => ({ isAtFirst }) => {
-      if (isAtFirst) return
-      // Simulate delay of loading.
-      _.delay(() => prependRows(_.fill(Array(20), 1)), 300)
-    }
-  }),
-  withHandlers((props) => {
-    const onLoadMore = _.debounce(props.onLoadMore, 100, { leading: true })
-
-    return {
-      onItemsRendered: ({ virtualRowsCount, rows, getVirtualIndex }) => (arg) => {
-        // Swap args for reversed list.
-        const startIndex = getVirtualIndex(arg.stopIndex)
-        const stopIndex = getVirtualIndex(arg.startIndex)
-
-        const { scrollDirection, currentIndex } = props.compareScroll({ startIndex, stopIndex })
-
-        // Ignore no-change.
-        if (scrollDirection === SCROLL_DIRECTION_NONE) return
-
-        const IsAtFirstOfRows = scrollDirection === SCROLL_DIRECTION_UP && startIndex === 0
-        const IsAtLastOfRows = scrollDirection === SCROLL_DIRECTION_DOWN && stopIndex >= rows.length - 1
-
-        if (IsAtFirstOfRows || IsAtLastOfRows) {
-          onLoadMore({
-            scrollDirection,
-            currentIndex,
-            isAtFirst: IsAtFirstOfRows,
-            isAtLast: IsAtLastOfRows
-          })
-        }
-      }
+  withRTVLHandlers({
+    isReversed: true,
+    virtualRowsSize: 50,
+    rows: _.fill(new Array(50), 1),
+    onLoadMore: ({ rows, appendRows }) => () => {
+      // Simulate slow network.
+      _.delay(() => {
+        appendRows(_.fill(new Array(50), 1))
+      }, 300)
     }
   }),
   withPropsOnChange(
     (props, nextProps) => {
-      return props.rows.length !== nextProps.rows.length
+      return props.itemCount !== nextProps.itemCount
     },
-    ({ rows, getVirtualIndex }) => ({
+    ({ rows, getActualIndex, setCachedHeight, refresh }) => ({
       renderItem (arg) {
-        const { style } = arg
+        const { index, style } = arg
 
-        const index = getVirtualIndex(arg.index)
-        const row = rows[index]
+        const actualIndex = getActualIndex(index)
+        const row = rows[actualIndex]
+
+        // Fix faker seed for getting same result.
+        faker.seed(index)
+        const text = faker.lorem.paragraphs()
 
         return (
-          <div className="Row" style={style} key={index}>
-            {row ? `Row ${index}` : 'Loading...'}
+          <div className={`row-${index}`} style={{ ...style }} key={index}>
+            <span style={{
+              background: 'white',
+              color: 'black',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              height: 20
+            }}>{row ? `Row ${actualIndex}` : 'Loading...'}</span>
+            <MeasurableText
+              text={row ? text : ''}
+              style={{ paddingTop: 20 }}
+              onMeasure={({ height }) => {
+                setCachedHeight(index, height)
+                refresh(index)
+              }}
+            />
           </div>
         )
       }
@@ -150,22 +98,25 @@ const enhance = compose(
 const LoadMore = enhance((props) => {
   const {
     vh,
+    setListRef,
     overScanCount,
-    virtualRowsCount,
+    itemCount,
     initialScrollToIndex,
     onItemsRendered,
+    getCachedHeight,
     renderItem
   } = props
 
   return (
-    <div style={{color: 'white'}}>
+    <div style={{ color: 'white' }}>
       <VirtualList
+        ref={setListRef}
         width="auto"
         height={vh || window.innerHeight}
-        itemCount={virtualRowsCount}
+        itemCount={itemCount}
         overscanCount={overScanCount}
         renderItem={renderItem}
-        itemSize={50}
+        itemSize={(index) => getCachedHeight()[index] || 120}
         scrollToIndex={initialScrollToIndex}
         onItemsRendered={onItemsRendered}
       />

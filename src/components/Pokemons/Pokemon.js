@@ -5,7 +5,7 @@ import { hot } from 'react-hot-loader'
 import Promise from '../../utils/promise'
 import fetch from '../../utils/fetch'
 
-import withMeasure from '../../hocs/withMeasure'
+import withSize from '../../hocs/withSize'
 
 import _ from 'lodash'
 
@@ -52,7 +52,7 @@ const getPokemonDetail = (id) => new Promise(async (resolve) => {
 
 const enhance = compose(
   hot(module),
-  withMeasure,
+  withSize,
   withState('detail', 'setDetail', null),
   lifecycle({
     componentDidMount () {
@@ -78,7 +78,7 @@ const Pokemon = (props) => {
   const {
     detail = {},
     pokemon,
-    setMeasureRef
+    setSizeRef
   } = props
 
   const {
@@ -97,7 +97,7 @@ const Pokemon = (props) => {
   const { flavor_text, version } = flavorTextEntry
 
   return (
-    <div ref={setMeasureRef} style={{color: 'white'}}>
+    <div ref={setSizeRef} style={{color: 'white'}}>
       <p style={{margin: 0}}>
         <span style={{ background: 'white', padding: '0 8px', color: 'black' }}>
           No.{id} name={name} lang={lang}
