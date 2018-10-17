@@ -56,7 +56,9 @@ const enhance = compose(
       this.props.setRows(rows)
     }
   }),
-  withRTVLHandlers(),
+  withRTVLHandlers({
+    estimatedSize: 200
+  }),
   withPropsOnChange(
     (props, nextProps) => !_.isEqual(props.location, nextProps.location),
     ({ location }) => {
