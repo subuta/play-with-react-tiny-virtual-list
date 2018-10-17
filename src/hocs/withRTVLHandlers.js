@@ -1,6 +1,7 @@
 import {
   compose,
   withHandlers,
+  withPropsOnChange,
   withStateHandlers
 } from 'recompose'
 import _ from 'lodash'
@@ -13,31 +14,19 @@ export default (options) => {
   const {
     isReversed = false,
     virtualRowsSize = 0,
-    rows = [],
-    onLoadMore = () => () => {}
+    estimatedSize = 100
   } = options
 
   return compose(
-    withStateHandlers(
-      () => {
-        const itemCount = rows.length + virtualRowsSize
-
-        return {
-          rows,
-          overScanCount: 3,
-          itemCount,
-          initialScrollToIndex: itemCount - 1
-        }
-      },
-      {
-        appendRows: (state) => (rows) => {
-          const nextRows = [...state.rows, ...rows]
-          return {
-            itemCount: nextRows.length + virtualRowsSize,
-            rows: nextRows
-          }
-        }
-      }
+    withStateHandlers(({ rows }) => ({
+      overScanCount: 3,
+      initialScrollToIndex: rows.length + virtualRowsSize - 1
+    }), {}),
+    withPropsOnChange(
+      (props, nextProps) => props.rows.length !== nextProps.rows.length,
+      ({ rows }) => ({
+        itemCount: rows.length + virtualRowsSize
+      })
     ),
     withHandlers(() => {
       let listRef = null
@@ -45,8 +34,6 @@ export default (options) => {
       let refresh = _.noop
 
       return {
-        onLoadMore,
-
         getActualIndex: ({ itemCount }) => (index) => {
           return isReversed ? itemCount - index - 1 : index + 1
         },
@@ -129,7 +116,9 @@ export default (options) => {
               })
             })
           }
-        }
+        },
+
+        getItemSize: ({ getCachedHeight }) => (index) => getCachedHeight()[index] || estimatedSize
       }
     })
   )

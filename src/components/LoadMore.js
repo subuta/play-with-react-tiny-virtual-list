@@ -10,8 +10,8 @@ import VirtualList from 'react-tiny-virtual-list'
 
 import {
   compose,
-  withHandlers,
   withState,
+  withHandlers,
   withPropsOnChange
 } from 'recompose'
 
@@ -44,16 +44,19 @@ const MeasurableText = enhanceText(({ text, setSizeRef, style }) => {
 const enhance = compose(
   hot(module),
   mapVh,
-  withRTVLHandlers({
-    isReversed: true,
-    virtualRowsSize: 50,
-    rows: _.fill(new Array(50), 1),
-    onLoadMore: ({ rows, appendRows }) => () => {
+  withState('rows', 'setRows', _.fill(new Array(100), 1)),
+  withHandlers({
+    onLoadMore: ({ rows, setRows }) => ({ isAtFirst }) => {
+      if (isAtFirst) return
       // Simulate slow network.
       _.delay(() => {
-        appendRows(_.fill(new Array(50), 1))
+        setRows([...rows, ..._.fill(new Array(100), 1)])
       }, 300)
     }
+  }),
+  withRTVLHandlers({
+    isReversed: true,
+    virtualRowsSize: 100
   }),
   withPropsOnChange(
     (props, nextProps) => {
@@ -103,8 +106,8 @@ const LoadMore = enhance((props) => {
     itemCount,
     initialScrollToIndex,
     onItemsRendered,
-    getCachedHeight,
-    renderItem
+    renderItem,
+    getItemSize
   } = props
 
   return (
@@ -116,7 +119,7 @@ const LoadMore = enhance((props) => {
         itemCount={itemCount}
         overscanCount={overScanCount}
         renderItem={renderItem}
-        itemSize={(index) => getCachedHeight()[index] || 120}
+        itemSize={(index) => getItemSize(index)}
         scrollToIndex={initialScrollToIndex}
         onItemsRendered={onItemsRendered}
       />
