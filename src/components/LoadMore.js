@@ -23,9 +23,10 @@ const enhanceText = compose(
   withSize,
   withPropsOnChange(
     (props, nextProps) => !_.isEqual(props.size, nextProps.size),
-    ({ size, onMeasure = _.noop }) => {
+    ({ size, onMeasure = _.noop, forceUpdate = _.noop }) => {
       if (size.height === 0) return
       onMeasure(size)
+      forceUpdate()
     }
   )
 )
@@ -56,13 +57,14 @@ const enhance = compose(
   }),
   withRTVLHandlers({
     isReversed: true,
-    virtualRowsSize: 100
+    virtualRowsSize: 50,
+    estimatedSize: 200
   }),
   withPropsOnChange(
     (props, nextProps) => {
       return props.itemCount !== nextProps.itemCount
     },
-    ({ rows, getActualIndex, setCachedHeight, refresh }) => ({
+    ({ rows, getActualIndex, cacheHeight, refresh, forceUpdate }) => ({
       renderItem (arg) {
         const { index, style } = arg
 
@@ -87,9 +89,10 @@ const enhance = compose(
               text={row ? text : ''}
               style={{ paddingTop: 20 }}
               onMeasure={({ height }) => {
-                setCachedHeight(index, height)
+                cacheHeight(index, height)
                 refresh(index)
               }}
+              forceUpdate={() => forceUpdate()}
             />
           </div>
         )
@@ -107,7 +110,7 @@ const LoadMore = enhance((props) => {
     initialScrollToIndex,
     onItemsRendered,
     renderItem,
-    getItemSize
+    itemSize
   } = props
 
   return (
@@ -119,7 +122,7 @@ const LoadMore = enhance((props) => {
         itemCount={itemCount}
         overscanCount={overScanCount}
         renderItem={renderItem}
-        itemSize={(index) => getItemSize(index)}
+        itemSize={itemSize}
         scrollToIndex={initialScrollToIndex}
         onItemsRendered={onItemsRendered}
       />

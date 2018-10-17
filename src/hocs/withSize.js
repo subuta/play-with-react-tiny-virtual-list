@@ -2,6 +2,7 @@ import {
   compose,
   lifecycle,
   withHandlers,
+  withPropsOnChange,
   withState,
 } from 'recompose'
 import _ from 'lodash'

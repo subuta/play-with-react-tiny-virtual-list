@@ -14,7 +14,7 @@ import {
   lifecycle,
   withState,
   branch,
-  renderComponent
+  renderComponent, withPropsOnChange
 } from 'recompose'
 
 const getPokemonDetail = (id) => new Promise(async (resolve) => {
@@ -53,6 +53,14 @@ const getPokemonDetail = (id) => new Promise(async (resolve) => {
 const enhance = compose(
   hot(module),
   withSize,
+  withPropsOnChange(
+    (props, nextProps) => !_.isEqual(props.size, nextProps.size),
+    ({ size, onMeasure = _.noop, forceUpdate = _.noop }) => {
+      if (size.height === 0) return
+      onMeasure(size)
+      forceUpdate()
+    }
+  ),
   withState('detail', 'setDetail', null),
   lifecycle({
     componentDidMount () {

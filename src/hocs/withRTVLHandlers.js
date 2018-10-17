@@ -10,7 +10,7 @@ const SCROLL_DIRECTION_UP = 'SCROLL_DIRECTION_UP'
 const SCROLL_DIRECTION_NONE = 'SCROLL_DIRECTION_NONE'
 const SCROLL_DIRECTION_DOWN = 'SCROLL_DIRECTION_DOWN'
 
-export default (options) => {
+export default (options = {}) => {
   const {
     isReversed = false,
     virtualRowsSize = 0,
@@ -32,6 +32,7 @@ export default (options) => {
       let listRef = null
       let cachedHeight = []
       let refresh = _.noop
+      let forceUpdate = _.noop
 
       return {
         getActualIndex: ({ itemCount }) => (index) => {
@@ -42,11 +43,13 @@ export default (options) => {
           if (ref === null) return
           listRef = ref
           refresh = (index) => listRef.recomputeSizes(index)
+          forceUpdate = _.debounce(() => listRef.forceUpdate(), 1000 / 60)
         },
 
         refresh: () => (index) => refresh(index),
+        forceUpdate: () => (index) => forceUpdate(index),
 
-        setCachedHeight: () => (index, height) => cachedHeight[index] = height,
+        cacheHeight: () => (index, height) => cachedHeight[index] = height,
         getCachedHeight: () => () => cachedHeight
       }
     }),
@@ -84,7 +87,8 @@ export default (options) => {
     }),
     withHandlers((initialProps) => {
       // Ignore fast scroll.
-      const onLoadMore = _.debounce(initialProps.onLoadMore, 100, { leading: true, trailing: false })
+      let onLoadMore = initialProps.onLoadMore || (() => {})
+      onLoadMore = _.debounce(onLoadMore, 100, { leading: true, trailing: false })
 
       return {
         onItemsRendered: (props) => (arg) => {
@@ -118,7 +122,7 @@ export default (options) => {
           }
         },
 
-        getItemSize: ({ getCachedHeight }) => (index) => getCachedHeight()[index] || estimatedSize
+        itemSize: ({ getCachedHeight }) => (index) => getCachedHeight()[index] || estimatedSize
       }
     })
   )

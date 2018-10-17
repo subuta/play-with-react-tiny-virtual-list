@@ -15,37 +15,26 @@ import Pokemon from './Pokemon'
 import {
   compose,
   lifecycle,
-  withHandlers,
   withPropsOnChange,
   withStateHandlers
 } from 'recompose'
 
 import mapVh from '../../hocs/mapVh'
+import withRTVLHandlers from '../../hocs/withRTVLHandlers'
 
 const POKE_URL_ID_REGEX = 'https://pokeapi.co/api/v2/pokemon/([0-9]+)/'
 
 const enhance = compose(
   hot(module),
   mapVh,
-  withPropsOnChange(
-    (props, nextProps) => !_.isEqual(props.location, nextProps.location),
-    ({ location }) => {
-      const query = qs.parse(location.search.split('?')[1])
-      return {
-        query: {
-          lang: query.lang || 'en'
-        }
-      }
-    }
-  ),
   withStateHandlers(
     () => ({
-      pokemons: [],
+      rows: [],
       scrollToIndex: null,
       draftScrollToIndex: ''
     }),
     {
-      setPokemons: () => (pokemons) => ({ pokemons }),
+      setRows: () => (rows) => ({ rows }),
       setDraftScrollToIndex: () => (e) => ({ draftScrollToIndex: e.target.value }),
       setScrollToIndex: () => (value) => {
         if (value === '') return { scrollToIndex: null }
@@ -59,61 +48,49 @@ const enhance = compose(
     async componentDidMount () {
       let response = await fetch('https://pokeapi.co/api/v2/pokemon/')
 
-      const pokemons = _.map(response.results, pokemon => {
+      const rows = _.map(response.results, pokemon => {
         pokemon.id = pokemon.url.match(POKE_URL_ID_REGEX)[1]
         return pokemon
       })
 
-      this.props.setPokemons(pokemons)
+      this.props.setRows(rows)
     }
   }),
-  withHandlers(() => {
-    let itemSizesCache = []
-    let listRef = null
-    let refresh = _.noop
-
-    return {
-      setListRef: () => (ref) => {
-        listRef = ref
-
-        if (listRef) {
-          refresh = (index) => listRef.recomputeSizes()
+  withRTVLHandlers(),
+  withPropsOnChange(
+    (props, nextProps) => !_.isEqual(props.location, nextProps.location),
+    ({ location }) => {
+      const query = qs.parse(location.search.split('?')[1])
+      return {
+        query: {
+          lang: query.lang || 'en'
         }
-      },
-
-      setItemSizesCache: () => (index, height) => {
-        itemSizesCache[index] = height
-        refresh()
-      },
-
-      getItemSizesCache: () => () => itemSizesCache
+      }
     }
-  }),
+  ),
   withPropsOnChange(
     (props, nextProps) => {
-      const isPokemonsChanged = props.pokemons.length !== nextProps.pokemons.length
+      const isRowsChanged = props.rows.length !== nextProps.rows.length
       const isQueryChanged = !_.isEqual(props.query, nextProps.query)
-      return isPokemonsChanged || isQueryChanged
+      return isRowsChanged || isQueryChanged
     },
-    ({ pokemons, query, setItemSizesCache, getItemSizesCache }) => {
+    ({ rows, query, cacheHeight, refresh, forceUpdate }) => {
       return {
         renderItem: ({ style, index }) => {
-          const pokemon = pokemons[index]
+          const pokemon = rows[index]
           return (
             <div className="row" style={{ ...style }} key={index}>
               <Pokemon
                 pokemon={pokemon}
                 lang={query.lang}
-                onMeasure={({ height }) => setItemSizesCache(index, height)}
+                onMeasure={({ height }) => {
+                  cacheHeight(index, height)
+                  refresh(index)
+                }}
+                forceUpdate={() => forceUpdate()}
               />
             </div>
           )
-        },
-
-        getItemSizes: () => {
-          const filled = _.fill(new Array(pokemons.length), 0)
-          const itemSizesCache = getItemSizesCache()
-          return _.merge(filled, itemSizesCache)
         }
       }
     }
@@ -126,14 +103,14 @@ const Pokemons = (props) => {
   const {
     query,
     vh,
-    pokemons,
+    rows,
     draftScrollToIndex,
     setDraftScrollToIndex,
     setScrollToIndex,
     scrollToIndex,
     renderItem,
     setListRef,
-    getItemSizes
+    itemSize
   } = props
 
   // Toggle lang.
@@ -146,7 +123,7 @@ const Pokemons = (props) => {
     nextLang = 'en'
   }
 
-  const itemCount = pokemons.length
+  const itemCount = rows.length
 
   return (
     <>
@@ -186,7 +163,7 @@ const Pokemons = (props) => {
         height={vh}
         itemCount={itemCount}
         renderItem={renderItem}
-        itemSize={(index) => getItemSizes()[index] || 200}
+        itemSize={itemSize}
         overscanCount={5}
         scrollToIndex={scrollToIndex == null ? null : scrollToIndex - 1}
         ref={setListRef}
