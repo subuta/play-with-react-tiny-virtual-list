@@ -55,10 +55,9 @@ const enhance = compose(
   withSize,
   withPropsOnChange(
     (props, nextProps) => !_.isEqual(props.size, nextProps.size),
-    ({ size, onMeasure = _.noop, forceUpdate = _.noop }) => {
+    ({ size, onMeasure = _.noop }) => {
       if (size.height === 0) return
       onMeasure(size)
-      forceUpdate()
     }
   ),
   withState('detail', 'setDetail', null),

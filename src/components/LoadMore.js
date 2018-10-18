@@ -12,7 +12,8 @@ import {
   compose,
   withState,
   withHandlers,
-  withPropsOnChange
+  withPropsOnChange,
+  lifecycle
 } from 'recompose'
 
 import mapVh from '../hocs/mapVh'
@@ -23,10 +24,9 @@ const enhanceText = compose(
   withSize,
   withPropsOnChange(
     (props, nextProps) => !_.isEqual(props.size, nextProps.size),
-    ({ size, onMeasure = _.noop, forceUpdate = _.noop }) => {
+    ({ size, onMeasure = _.noop }) => {
       if (size.height === 0) return
       onMeasure(size)
-      forceUpdate()
     }
   )
 )
@@ -64,19 +64,22 @@ const enhance = compose(
     (props, nextProps) => {
       return props.itemCount !== nextProps.itemCount
     },
-    ({ rows, getActualIndex, cacheHeight, refresh, forceUpdate }) => ({
-      renderItem (arg) {
-        const { index, style } = arg
+    ({ rows, getActualIndex, cacheHeight, forceUpdateList }) => {
+      // Call forceUpdateList once at itemCount changed.
+      _.delay(() => forceUpdateList())
+      return {
+        renderItem (arg) {
+          const { index, style } = arg
 
-        const actualIndex = getActualIndex(index)
-        const row = rows[actualIndex]
+          const actualIndex = getActualIndex(index)
+          const row = rows[actualIndex]
 
-        // Fix faker seed for getting same result.
-        faker.seed(index)
-        const text = faker.lorem.paragraphs()
+          // Fix faker seed for getting same result.
+          faker.seed(index)
+          const text = faker.lorem.paragraphs()
 
-        return (
-          <div className={`row-${index}`} style={{ ...style }} key={index}>
+          return (
+            <div className={`row-${index}`} style={{ ...style }} key={index}>
             <span style={{
               background: 'white',
               color: 'black',
@@ -85,19 +88,16 @@ const enhance = compose(
               left: 0,
               height: 20
             }}>{row ? `Row ${actualIndex}` : 'Loading...'}</span>
-            <MeasurableText
-              text={row ? text : ''}
-              style={{ paddingTop: 20 }}
-              onMeasure={({ height }) => {
-                cacheHeight(index, height)
-                refresh(index)
-              }}
-              forceUpdate={() => forceUpdate()}
-            />
-          </div>
-        )
+              <MeasurableText
+                text={row ? text : ''}
+                style={{ paddingTop: 20 }}
+                onMeasure={({ height }) => cacheHeight(index, height)}
+              />
+            </div>
+          )
+        }
       }
-    })
+    }
   )
 )
 

@@ -76,7 +76,9 @@ const enhance = compose(
       const isQueryChanged = !_.isEqual(props.query, nextProps.query)
       return isRowsChanged || isQueryChanged
     },
-    ({ rows, query, cacheHeight, refresh, forceUpdate }) => {
+    ({ rows, query, cacheHeight, forceUpdateList }) => {
+      // Call forceUpdateList once at itemCount changed.
+      _.delay(() => forceUpdateList())
       return {
         renderItem: ({ style, index }) => {
           const pokemon = rows[index]
@@ -85,11 +87,7 @@ const enhance = compose(
               <Pokemon
                 pokemon={pokemon}
                 lang={query.lang}
-                onMeasure={({ height }) => {
-                  cacheHeight(index, height)
-                  refresh(index)
-                }}
-                forceUpdate={() => forceUpdate()}
+                onMeasure={({ height }) => cacheHeight(index, height)}
               />
             </div>
           )

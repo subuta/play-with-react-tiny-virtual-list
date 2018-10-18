@@ -2,7 +2,8 @@ import {
   compose,
   withHandlers,
   withPropsOnChange,
-  withStateHandlers
+  withStateHandlers,
+  lifecycle
 } from 'recompose'
 import _ from 'lodash'
 
@@ -42,14 +43,24 @@ export default (options = {}) => {
         setListRef: () => (ref) => {
           if (ref === null) return
           listRef = ref
-          refresh = (index) => listRef.recomputeSizes(index)
-          forceUpdate = _.debounce(() => listRef.forceUpdate(), 1000 / 60)
+          window.listRef = listRef
+
+          refresh = (index) => {
+            listRef.recomputeSizes(index)
+          }
+
+          forceUpdate = () => {
+            listRef.forceUpdate()
+          }
         },
 
-        refresh: () => (index) => refresh(index),
-        forceUpdate: () => (index) => forceUpdate(index),
+        cacheHeight: () => (index, height) => {
+          cachedHeight[index] = height
+          refresh(index)
+        },
 
-        cacheHeight: () => (index, height) => cachedHeight[index] = height,
+        forceUpdateList: () => () => forceUpdate(),
+
         getCachedHeight: () => () => cachedHeight
       }
     }),
@@ -122,7 +133,9 @@ export default (options = {}) => {
           }
         },
 
-        itemSize: ({ getCachedHeight }) => (index) => getCachedHeight()[index] || estimatedSize
+        itemSize: ({ getCachedHeight }) => (index) => {
+          return getCachedHeight()[index] || estimatedSize
+        }
       }
     })
   )
